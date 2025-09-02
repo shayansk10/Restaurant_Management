@@ -1,7 +1,6 @@
 import pymysql
 from datetime import datetime
 
-# Database connection function
 def connect_db():
     try:
         con = pymysql.connect(
@@ -17,7 +16,6 @@ def connect_db():
         print(f"Connection failed: {e}")
         exit()
 
-# Function to show menu
 def show_menu(cursor):
     cursor.execute("SELECT item_name, price FROM menu")
     rows = cursor.fetchall()
@@ -25,7 +23,6 @@ def show_menu(cursor):
     for item, price in rows:
         print(f"{item}: {price} PKR")
 
-# Function to create new customer
 def create_customer(cursor, con):
     print("\n--- New Customer ---")
     name = input("Enter customer name: ").title()
@@ -40,19 +37,15 @@ def create_customer(cursor, con):
     print(f"Customer created! Your ID: {customer_id}")
     return customer_id
 
-# Function to place order
-# place_order function modify karein
 def place_order(cursor, con, customer_id):
     show_menu(cursor)
     
-    # Item ID se kaam karein
     try:
         item_id = int(input("\nEnter item ID: "))
     except:
         print("Please enter a valid item ID!")
         return
     
-    # Pehle check karein item exists hai ya nahi
     cursor.execute("SELECT item_name, price FROM menu WHERE item_id=%s", (item_id,))
     result = cursor.fetchone()
     
@@ -71,13 +64,11 @@ def place_order(cursor, con, customer_id):
         
     total = price * qty
     
-    # Ab item_id use karein
     cursor.execute("INSERT INTO orders (customer_id, item_id, qty, price) VALUES (%s, %s, %s, %s)", 
                   (customer_id, item_id, qty, total))
     con.commit()
     print(f"{qty} {item_name}(s) added to your order!")
 
-# Function to view bill
 def view_bill(cursor, customer_id):
     cursor.execute("""
         SELECT m.item_name, o.qty, o.price 
@@ -101,9 +92,7 @@ def view_bill(cursor, customer_id):
     print("-------------------")
     print(f"Total Amount: {total_bill} PKR")
 
-# Function to remove item from order
 def remove_item(cursor, con, customer_id):
-    # Pehle customer ke orders dikhayein with item names
     cursor.execute("""
         SELECT m.item_name, o.qty 
         FROM orders o 
@@ -123,7 +112,6 @@ def remove_item(cursor, con, customer_id):
 
     remove_item_name = input("\nEnter item name to remove: ").title()
     
-    # Pehle item_name se item_id find karein
     cursor.execute("SELECT item_id FROM menu WHERE item_name = %s", (remove_item_name,))
     item_result = cursor.fetchone()
     
@@ -133,7 +121,6 @@ def remove_item(cursor, con, customer_id):
         
     item_id = item_result[0]
     
-    # Ab orders table se check karein
     cursor.execute("SELECT qty FROM orders WHERE customer_id = %s AND item_id = %s", 
                   (customer_id, item_id))
     result = cursor.fetchone()
@@ -150,12 +137,10 @@ def remove_item(cursor, con, customer_id):
         return
         
     if remove_qty >= current_qty:
-        # Complete item remove karein
         cursor.execute("DELETE FROM orders WHERE customer_id = %s AND item_id = %s", 
                       (customer_id, item_id))
         print(f"{remove_item_name} removed completely!")
     else:
-        # Partial quantity remove karein
         new_qty = current_qty - remove_qty
         cursor.execute("UPDATE orders SET qty = %s WHERE customer_id = %s AND item_id = %s", 
                       (new_qty, customer_id, item_id))
@@ -163,7 +148,6 @@ def remove_item(cursor, con, customer_id):
     
     con.commit()
 
-# Main program
 def main():
     con = connect_db()
     cursor = con.cursor()
@@ -178,7 +162,6 @@ def main():
     elif choice == "2":
         try:
             customer_id = int(input("Enter your customer ID: "))
-            # Verify customer exists
             cursor.execute("SELECT customer_id FROM customers WHERE customer_id=%s", (customer_id,))
             if not cursor.fetchone():
                 print("Customer ID not found!")
@@ -190,7 +173,6 @@ def main():
         print("Invalid choice!")
         return
     
-    # Main menu loop
     while True:
         print(f"\nCustomer ID: {customer_id}")
         print("1. Show Menu")
@@ -215,7 +197,6 @@ def main():
         else:
             print("Invalid choice! Please try again.")
     
-    # Clean up
     cursor.close()
     con.close()
 
